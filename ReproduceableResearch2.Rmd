@@ -1,0 +1,77 @@
+---
+title: "ReproduceableResearch2"
+author: "Markus"
+date: "16 April 2017"
+output: html_document
+---
+
+# Analysis of Storm Damage is the USA
+
+# Data Processing
+**The data is downloaded filtered to those incidents, where damage was registrated**
+```{r echo=TRUE}
+library(dplyr)
+library(readr)
+library(ggplot2)
+
+fileName <- 'repdata-data-StormData.csv.bz2'
+fileURL <- 'https://d396qusza40orc.cloudfront.net/repdata%2Fdata%2FStormData.csv.bz2'
+
+if(!file.exists(fileName)) {
+    download.file(fileURL, fileName, method = 'curl')
+}
+
+stormData <- read.csv(bzfile(fileName),stringsAsFactors = FALSE)
+
+stormData <- stormData %>%
+    filter(FATALITIES > 0 | INJURIES > 0 | PROPDMG > 0 | CROPDMG > 0)
+```
+
+# Results
+The data is filtered by Fatalities
+```{r echo=TRUE}
+storm_damage <- stormData %>%
+    group_by(EVTYPE) %>%
+    summarise(FATALITIES = sum(FATALITIES), INJURIES = sum(INJURIES), PROPDMG = sum(PROPDMG),
+              CROPDMG = sum(CROPDMG))
+
+storm_damage <- storm_damage[order(-storm_damage$FATALITIES), ]
+
+head(storm_damage)
+```
+
+
+**The data is filtered by Fatalities**
+```{r echo=TRUE}
+storm_damage <- stormData %>%
+    group_by(EVTYPE) %>%
+    summarise(FATALITIES = sum(FATALITIES), INJURIES = sum(INJURIES), PROPDMG = sum(PROPDMG),
+              CROPDMG = sum(CROPDMG))
+
+storm_damage <- storm_damage[order(-storm_damage$FATALITIES), ]
+storm_damagetop5 <- storm_damage[1:5, ]
+
+ggplot(data = storm_damagetop5, aes(x = EVTYPE, y = FATALITIES)) + geom_bar(stat="identity") + 
+    ggtitle("Top 5 Wheather Events regarding Fatalities")
+```
+
+
+**The data is filtered by Economic Damage, which is a new variable created of Property Damage and Crop Damage**
+```{r echo=TRUE}
+storm_damage <- stormData %>%
+    group_by(EVTYPE) %>%
+    summarise(FATALITIES = sum(FATALITIES), INJURIES = sum(INJURIES), PROPDMG = sum(PROPDMG),
+              CROPDMG = sum(CROPDMG))
+
+storm_damage$ECDAMAGE <- storm_damage$PROPDMG + storm_damage$CROPDMG
+storm_damage <- storm_damage[order(-storm_damage$ECDAMAGE), ]
+
+storm_damagetop5 <- storm_damage[1:5, ]
+
+ggplot(data = storm_damagetop5, aes(x = EVTYPE, y = ECDAMAGE)) + geom_bar(stat="identity") + 
+    ggtitle("Top 5 Wheather Events regarding Economic Damage")
+```
+
+# Conclusion
+* Tornados do by far the greatest damage to population
+* Tornados are also doing the greatest economic damage, followed by flash floods.
